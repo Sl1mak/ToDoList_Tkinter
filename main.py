@@ -4,14 +4,13 @@ root = tk.Tk()
 root.title("ToDo List")
 root.geometry("500x500")
 
-taskList = []
-check_vars = []
+tasks = {}
 
 def RefreshTaskList():
     for widget in taskFrame.winfo_children():
         widget.destroy()
 
-    if len(taskList) == 0:
+    if len(tasks) == 0:
         emptyLabel = tk.Label(
             taskFrame,
             text="No tasks yet",
@@ -20,17 +19,40 @@ def RefreshTaskList():
         )
         emptyLabel.pack(anchor="center", pady=175)
 
-    for task in taskList:
+    for task in tasks:
         row = tk.Frame(taskFrame)
         row.pack(fill="x", pady=1)
 
         var = tk.BooleanVar()
-        cb = tk.Checkbutton(row, variable=var)
-        cb.pack(side="left")
-        check_vars.append(var)
+        if tasks.get(task) is not None:
+            var = tasks[task]
 
-        lbl = tk.Label(row, text=task, font=("Arial", 12))
+        if var.get():
+            row.config(bg="lightgreen")
+
+        tasks[task] = var
+        cb = tk.Checkbutton(row,
+                            variable=var,
+                            command=RefreshTaskList,
+                            bg=row.cget("bg"),
+                            activebackground=row.cget("bg"),)
+        cb.pack(side="left")
+
+        lbl = tk.Label(row,
+                       text=task,
+                       font=("Arial", 12),
+                       bg=row.cget("bg"))
         lbl.pack(side="left")
+
+        def dltTask(task):
+            del tasks[task]
+            RefreshTaskList()
+
+        dlt = tk.Button(row,
+                        text="Delete",
+                        font=("Arial", 12),
+                        command=lambda task=task: dltTask(task))
+        dlt.pack(side="right")
 
 def NewTask():
     InputTaskWindow = tk.Toplevel(root)
@@ -39,7 +61,7 @@ def NewTask():
 
     def AddTask():
         if len(entry.get()) != 0:
-            taskList.append(entry.get())
+            tasks[entry.get()] = None
             InputTaskWindow.destroy()
             RefreshTaskList()
 
@@ -59,7 +81,7 @@ taskFrame = tk.Frame(
 taskFrame.pack(side="top", expand=True)
 taskFrame.pack_propagate(False)
 
-if len(taskList) == 0:
+if len(tasks) == 0:
     emptyLabel = tk.Label(
         taskFrame,
         text="No tasks yet",
